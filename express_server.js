@@ -23,6 +23,11 @@ app.get('/urls.json', (request, response) => {
   response.json(urlDatabase);
 });
 
+app.get('/urls/:shortURL', (request, response) => {
+  let templateVars = { shortURL: request.params.shortURL, longURL: urlDatabase[request.params.shortURL] };
+  response.render('urls_show', templateVars);
+});
+
 app.get('/hello', (request, response) => {
   response.send('<html><body>Hello <b>World</b></body></html>\n');
 });
