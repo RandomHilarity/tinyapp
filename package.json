@@ -19,6 +19,7 @@
   "homepage": "https://github.com/RandomHilarity/tinyapp#readme",
   "dependencies": {
     "chai": "^4.2.0",
+    "ejs": "^2.6.2",
     "express": "^4.17.1",
     "mocha": "^6.2.0"
   }
