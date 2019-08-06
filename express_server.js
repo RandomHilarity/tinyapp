@@ -22,11 +22,6 @@ app.get('/', (request, response) => {
   response.send('Hello!');
 });
 
-//app.post('/urls', (request, response) => {
-//  console.log(request.body);
-//  response.send('Ok');
-//});
-
 app.post('/urls', (request, response) => {
   let shortURL = generateRandomString();
   urlDatabase[shortURL] = request.body["longURL"];
