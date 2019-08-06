@@ -36,6 +36,7 @@ app.post('/logout', (request, response) => {
   response.redirect("urls/");
 });
 
+// create new shortURL:longURL pair, random key
 app.post('/urls', (request, response) => {
   let shortURL = generateRandomString();
   urlDatabase[shortURL] = request.body["longURL"];
@@ -55,7 +56,11 @@ app.get('/urls.json', (request, response) => {
 });
 
 app.get('/urls/new', (request, response) => {
-  response.render('urls_new');
+  let templateVars = {
+    urls: urlDatabase,
+    username: request.cookies["username"]
+  };
+  response.render('urls_new', templateVars);
 });
 
 app.get('/urls/:shortURL', (request, response) => {
