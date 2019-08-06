@@ -33,7 +33,6 @@ app.get('/urls', (request, response) => {
   response.render('urls_index', templateVars);
 });
 
-
 app.get('/urls.json', (request, response) => {
   response.json(urlDatabase);
 });
@@ -45,6 +44,11 @@ app.get('/urls/new', (request, response) => {
 app.get('/urls/:shortURL', (request, response) => {
   let templateVars = { shortURL: request.params.shortURL, longURL: urlDatabase[request.params.shortURL] };
   response.render('urls_show', templateVars);
+});
+
+app.post('/urls/:shortURL/delete', (request, response) => {
+  delete urlDatabase[request.params.shortURL];
+  response.redirect('/urls');
 });
 
 app.get('/u/:shortURL', (request, response) => {
