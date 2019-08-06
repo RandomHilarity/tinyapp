@@ -1,5 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
 const app = express();
 const PORT = 8080;
 
@@ -11,6 +12,7 @@ const generateRandomString = function() {
 
 app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({extended: true}));
+app.use(cookieParser());
 
 let urlDatabase = {
   "b2xVn2": 'http://www.lighthouselabs.ca',
@@ -22,6 +24,18 @@ app.get('/', (request, response) => {
   response.send('Hello!');
 });
 
+//accepts and sets cookies from login
+app.post('/login', (request, response) => {
+  response.cookie('username', request.body["username"]);
+  return response.redirect('urls/');
+});
+
+//clears cookies
+app.post('/logout', (request, response) => {
+  response.clearCookie("username");
+  response.redirect("urls/");
+});
+
 app.post('/urls', (request, response) => {
   let shortURL = generateRandomString();
   urlDatabase[shortURL] = request.body["longURL"];
@@ -29,7 +43,10 @@ app.post('/urls', (request, response) => {
 });
 
 app.get('/urls', (request, response) => {
-  let templateVars = { urls: urlDatabase };
+  let templateVars = {
+    urls: urlDatabase,
+    username: request.cookies["username"]
+  };
   response.render('urls_index', templateVars);
 });
 
@@ -42,7 +59,11 @@ app.get('/urls/new', (request, response) => {
 });
 
 app.get('/urls/:shortURL', (request, response) => {
-  let templateVars = { shortURL: request.params.shortURL, longURL: urlDatabase[request.params.shortURL] };
+  let templateVars = {
+    shortURL: request.params.shortURL,
+    longURL: urlDatabase[request.params.shortURL],
+    username: request.cookies["username"]
+  };
   response.render('urls_show', templateVars);
 });
 
