@@ -46,6 +46,7 @@ app.get('/urls/:shortURL', (request, response) => {
   response.render('urls_show', templateVars);
 });
 
+// DELETE - deletes short/long URL entry from urlDatabase object
 app.post('/urls/:shortURL/delete', (request, response) => {
   delete urlDatabase[request.params.shortURL];
   response.redirect('/urls');
@@ -56,8 +57,19 @@ app.get('/u/:shortURL', (request, response) => {
   response.redirect(longURL);
 });
 
+// EDIT - change longURL and redirect to URL list
+app.post('/urls/:id', (request, response) => {
+  urlDatabase[request.params.id] = request.body["longURL"];
+  response.redirect('/urls');
+});
+
 app.get('/hello', (request, response) => {
   response.send('<html><body>Hello <b>World</b></body></html>\n');
+});
+
+// CATCHALL - for random page requests goes back to index
+app.get('*', (request, response) => {
+  response.redirect('/urls');
 });
 
 app.listen(PORT, () => {
