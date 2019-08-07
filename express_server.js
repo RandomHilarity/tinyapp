@@ -10,6 +10,15 @@ const generateRandomString = function() {
   }).join('').substr(2,6);
 };
 
+const emailExists = function(email, userObj) {
+  for (let userID in userObj) {
+    if (email === userObj[userID]["email"]) {
+      return true;
+    }
+  }
+  return false;
+};
+
 app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser());
@@ -19,21 +28,28 @@ let urlDatabase = {
   "9sm5xK": 'http://www.google.com'
 };
 
+let users = {
+  "userRandomID": {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur"
+  },
+  "user2RandomID": {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk"
+  }
+};
+
 //ROOT path handler
 app.get('/', (request, response) => {
   response.send('Hello!');
 });
 
-//accepts and sets cookies from login
-app.post('/login', (request, response) => {
-  response.cookie('username', request.body["username"]);
-  return response.redirect('urls/');
-});
-
 //clears cookies
 app.post('/logout', (request, response) => {
-  response.clearCookie("username");
-  response.redirect("urls/");
+  response.clearCookie("user_id");
+  response.redirect("/urls");
 });
 
 // create new shortURL:longURL pair, random key
@@ -46,7 +62,7 @@ app.post('/urls', (request, response) => {
 app.get('/urls', (request, response) => {
   let templateVars = {
     urls: urlDatabase,
-    username: request.cookies["username"]
+    user: users[request.cookies["user_id"]]
   };
   response.render('urls_index', templateVars);
 });
@@ -58,7 +74,7 @@ app.get('/urls.json', (request, response) => {
 app.get('/urls/new', (request, response) => {
   let templateVars = {
     urls: urlDatabase,
-    username: request.cookies["username"]
+    user: users[request.cookies["user_id"]]
   };
   response.render('urls_new', templateVars);
 });
@@ -67,7 +83,7 @@ app.get('/urls/:shortURL', (request, response) => {
   let templateVars = {
     shortURL: request.params.shortURL,
     longURL: urlDatabase[request.params.shortURL],
-    username: request.cookies["username"]
+    user: users[request.cookies["user_id"]]
   };
   response.render('urls_show', templateVars);
 });
@@ -87,6 +103,58 @@ app.get('/u/:shortURL', (request, response) => {
 app.post('/urls/:id', (request, response) => {
   urlDatabase[request.params.id] = request.body["longURL"];
   response.redirect('/urls');
+});
+
+// USER LOGIN - Accept existing username and password
+app.post('/login', (request, response) => {
+  let uEmail = request.body["email"];
+  let uPass = request.body["password"];
+  if (!emailExists(uEmail, users)) {
+    response.status(400).send('Email does not exist, register or re-enter');
+  }
+  for (let userID in users) {
+    if (uEmail === users[`${userID}`]["email"] && uPass === users[`${userID}`]["password"]) {
+      response.cookie('user_id', userID);
+      return response.redirect('urls/');
+    }
+  }
+  response.status(400).send('Email or password incorrect');
+});
+
+// USER LOGIN - goto login page
+app.get('/login',(request, response) => {
+  let templateVars = {
+    user: users[request.cookies["user_id"]]
+  };
+  response.render('login', templateVars);
+});
+
+// USER REGISTRATION - Accept username and add to user object
+app.post('/register', (request, response) => {
+  if (!request.body["email"] || !request.body["password"]) {
+    response.status(400).send('Username or password not entered.');
+    return;
+  }
+  if (emailExists(request.body["email"], users)) {
+    response.status(400).send('Email already exists.');
+    return;
+  }
+  
+  let newID = generateRandomString();
+  users[newID] = { id: newID,
+    email: request.body["email"],
+    password: request.body["password"]
+  };
+  response.cookie('user_id', newID);
+  return response.redirect('urls/');
+});
+
+// USER REGISTRATION - Go to registration page
+app.get('/register', (request, response) => {
+  let templateVars = {
+    user: users[request.cookies["user_id"]]
+  };
+  response.render('register', templateVars);
 });
 
 app.get('/hello', (request, response) => {
