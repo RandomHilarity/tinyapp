@@ -105,14 +105,18 @@ app.post('/urls/:id', (request, response) => {
   response.redirect('/urls');
 });
 
-// USER LOGIN - Accept existing username and password
+// USER LOGIN - Accept existing user email and password
 app.post('/login', (request, response) => {
   let uEmail = request.body["email"];
   let uPass = request.body["password"];
   if (!emailExists(uEmail, users)) {
-    response.status(400).send('Email does not exist, register or re-enter');
+    response.status(403).send('Email does not exist, register or re-enter');
   }
   for (let userID in users) {
+    if (uEmail === users[`${userID}`]["email"] && uPass !== users[`${userID}`]["password"]) {
+      response.status(403).send("Incorrect password");
+      return;
+    }
     if (uEmail === users[`${userID}`]["email"] && uPass === users[`${userID}`]["password"]) {
       response.cookie('user_id', userID);
       return response.redirect('urls/');
@@ -129,10 +133,10 @@ app.get('/login',(request, response) => {
   response.render('login', templateVars);
 });
 
-// USER REGISTRATION - Accept username and add to user object
+// USER REGISTRATION - Accept user email and password, and add to users object
 app.post('/register', (request, response) => {
   if (!request.body["email"] || !request.body["password"]) {
-    response.status(400).send('Username or password not entered.');
+    response.status(400).send('email or password not entered.');
     return;
   }
   if (emailExists(request.body["email"], users)) {
