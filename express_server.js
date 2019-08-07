@@ -4,6 +4,19 @@ const cookieParser = require('cookie-parser');
 const app = express();
 const PORT = 8080;
 
+/* const isLoggedIn = function() {
+  app.get(user_id, (response, request) => {
+    if (!user_id) {
+      let templateVars = {
+        user: users[request.cookies["user_id"]]
+      };
+      response.render('login', templateVars);
+    }
+    response.render('login');
+  });
+}; */
+
+
 const generateRandomString = function() {
   return Math.random().toString(36).split('').filter(function(value, index, self) {
     return self.indexOf(value) === index;
@@ -19,26 +32,37 @@ const emailExists = function(email, userObj) {
   return false;
 };
 
+const urlIsForUser = function(id) {
+  let userUrlObj = {};
+  for (let url in urlDatabase) {
+    if (urlDatabase[url]["userID"] === id) {
+      userUrlObj[url] = { "longurl": urlDatabase[url].longurl };
+    }
+  }
+  return userUrlObj;
+};
+
 app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser());
+//app.use(isLoggedIn());
 
 let urlDatabase = {
-  "b2xVn2": 'http://www.lighthouselabs.ca',
-  "9sm5xK": 'http://www.google.com'
+  "b2xVn2": { longurl: 'http://www.lighthouselabs.ca', userID: "userRandomID" },
+  "9sm5xK": { longurl: 'http://www.google.com', userID: "user2RandomID" }
 };
 
 let users = {
   "userRandomID": {
     id: "userRandomID",
-    email: "user@example.com",
-    password: "purple-monkey-dinosaur"
+    email: "1@1.com",
+    password: "password"
   },
   "user2RandomID": {
     id: "user2RandomID",
-    email: "user2@example.com",
-    password: "dishwasher-funk"
-  }
+    email: "2@2.com",
+    password: "password"
+  },
 };
 
 //ROOT path handler
@@ -59,10 +83,12 @@ app.post('/urls', (request, response) => {
   response.redirect(`/urls/${shortURL}`);
 });
 
+//Displays all URLs owned by user
 app.get('/urls', (request, response) => {
+  let id = request.cookies["user_id"];
   let templateVars = {
-    urls: urlDatabase,
-    user: users[request.cookies["user_id"]]
+    urls: urlIsForUser(id),
+    user: users[id]
   };
   response.render('urls_index', templateVars);
 });
@@ -72,35 +98,61 @@ app.get('/urls.json', (request, response) => {
 });
 
 app.get('/urls/new', (request, response) => {
+  let id = request.cookies["user_id"];
+  if (!users[request.cookies["user_id"]]) {
+    let templateVars = {
+      user: users[request.cookies["user_id"]]
+    };
+    response.render('login', templateVars);
+  }
   let templateVars = {
-    urls: urlDatabase,
+    urls: urlIsForUser(id),
     user: users[request.cookies["user_id"]]
   };
   response.render('urls_new', templateVars);
 });
 
 app.get('/urls/:shortURL', (request, response) => {
+  let id = request.cookies["user_id"];
+  let reqUrl = request.params.shortURL;
+  if (id !== urlDatabase[reqUrl].userID) {
+    response.status(403).send("shortURL not owned by user");
+    return;
+  }
   let templateVars = {
-    shortURL: request.params.shortURL,
-    longURL: urlDatabase[request.params.shortURL],
-    user: users[request.cookies["user_id"]]
+    shortURL: reqUrl,
+    longURL: urlDatabase[reqUrl],
+    user: users[id]
   };
   response.render('urls_show', templateVars);
 });
 
 // DELETE - deletes short/long URL entry from urlDatabase object
 app.post('/urls/:shortURL/delete', (request, response) => {
+  let id = request.cookies["user_id"];
+  let reqUrl = request.params.shortURL;
+  if (id !== urlDatabase[reqUrl].userID) {
+    response.status(403).send("shortURL not owned by user");
+    return;
+  }
   delete urlDatabase[request.params.shortURL];
   response.redirect('/urls');
 });
 
 app.get('/u/:shortURL', (request, response) => {
-  const longURL = urlDatabase[request.params.shortURL];
+  let reqUrl = request.params.shortURL;
+  const longURL = urlDatabase[reqUrl].longurl;
   response.redirect(longURL);
 });
 
 // EDIT - change longURL and redirect to URL list
 app.post('/urls/:id', (request, response) => {
+  let id = request.cookies["user_id"];
+  let reqUrl = request.params.shortURL;
+  if (id !== urlDatabase[reqUrl].userID) {
+    response.status(403).send("shortURL not owned by user");
+    return;
+  }
   urlDatabase[request.params.id] = request.body["longURL"];
   response.redirect('/urls');
 });

@@ -13,7 +13,7 @@
     <div class="card text-center" >
       <div class="card-header"></div>
       <div class="card-body">
-        <h5 class="card-title"><strong>TinyURL for: <%= longURL %></strong></h5>
+        <h5 class="card-title"><strong>TinyURL for: <%= longURL["longurl"] %></strong></h5>
         <p class="card-text">Short URL: <a href="/u/<%= shortURL %>"><%= shortURL %></a></p>
       </div>
     </div>
@@ -22,7 +22,7 @@
       <form class="form-inline" role="form" action="/urls/<%= shortURL %>/" method="POST">
         <div class="form-group mb-2">
         <label for="longURL">Change URL:</label>
-        <input class="form-control" type="text" name="longURL" value="<%= longURL %>" style="width: 300px; margin: 0.5em">
+        <input class="form-control" type="text" name="longURL" value="<%= longURL['longurl'] %>" style="width: 300px; margin: 0.5em">
         <button type="submit" class="btn btn-primary">Submit</button>
       </div>
     </form>
