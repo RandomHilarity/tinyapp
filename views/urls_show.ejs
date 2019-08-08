@@ -19,7 +19,7 @@
     </div>
     <div class="card-footer text-muted text-center">
       <h3><strong>Edit</strong></h3>
-      <form class="form-inline" role="form" action="/urls/<%= shortURL %>/" method="POST">
+      <form class="form-inline justify-content-center" role="form" action="/urls/<%= shortURL %>?_method=PUT" method="POST">
         <div class="form-group mb-2">
         <label for="longURL">Change URL:</label>
         <input class="form-control" type="text" name="longURL" value="<%= longURL['longurl'] %>" style="width: 300px; margin: 0.5em">

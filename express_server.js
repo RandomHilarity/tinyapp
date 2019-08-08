@@ -2,6 +2,7 @@
 
 const express = require('express');
 const bodyParser = require('body-parser');
+const methodOverride = require('method-override');
 const cookieSession = require('cookie-session');
 const app = express();
 const bcrypt = require('bcrypt');
@@ -20,6 +21,7 @@ app.use(cookieSession({
   name: 'session',
   keys: ['key1', `key2`]
 }));
+app.use(methodOverride('_method'));
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}`);
@@ -136,7 +138,7 @@ app.post('/urls_new', (request, response) => {
 });
 
 // EDIT - change longURL and redirect to URL list
-app.post('/urls/:id', (request, response) => {
+app.put('/urls/:id', (request, response) => {
   let id = request.session["user_id"];
   let reqUrl = request.params.id;
   if (id !== urlDatabase[reqUrl].userID) {
@@ -148,7 +150,7 @@ app.post('/urls/:id', (request, response) => {
 });
 
 // DELETE - deletes short/long URL entry from urlDatabase object, check if logged in/owner
-app.post('/urls/:shortURL/delete', (request, response) => {
+app.delete('/urls/:shortURL/delete', (request, response) => {
   let id = request.session["user_id"];
   let reqUrl = request.params.shortURL;
   if (id !== urlDatabase[reqUrl].userID) {
