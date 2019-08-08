@@ -1,17 +1,20 @@
 //CONSTANTS W/ REQUIRES
 
 const express = require('express');
+const app = express();
 const bodyParser = require('body-parser');
 const methodOverride = require('method-override');
 const cookieSession = require('cookie-session');
-const app = express();
 const bcrypt = require('bcrypt');
-const PORT = 8080;
 
 const helpers = require('./helpers');
 const generateRandomString = helpers.generateRandomString;
 const getUserByEmail = helpers.getUserByEmail;
 const urlIsForUser = helpers.urlIsForUser;
+
+const users = {};
+const urlDatabase = {};
+const PORT = 8080;
 
 //SET USE and LISTEN
 
@@ -22,31 +25,6 @@ app.use(cookieSession({
   keys: ['key1', `key2`]
 }));
 app.use(methodOverride('_method'));
-
-app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}`);
-});
-
-//TESTING ACCOUNTS AND DATA OBJECTS
-
-let urlDatabase = {
-  "b2xVn2": { longurl: 'http://www.lighthouselabs.ca', userID: "7bwcl5" },
-  "9sm5xK": { longurl: 'http://www.google.com', userID: "gqe7hr" }
-};
-
-//unhashed PW for both test accounts is password
-let users = {
-  "7bwcl5": {
-    id: "7bwcl5",
-    email: "1@1.com",
-    password: "$2b$10$t0CtHP4/uEVkDyF1wktgYe.IZPFhpTp60gxlOAcgy6leVt6W6rAe6"
-  },
-  "gqe7hr": {
-    id: "gqe7hr",
-    email: "2@2.com",
-    password: "$2b$10$YOI.Y10.NFs1Pd6aXpcv1Oq11Xl/12PTnVQPU.Lw9/Fa.iG0A.dvC"
-  },
-};
 
 //////////////////////////
 //     GET AND POST     //  **sorted by behavior requirements outline
@@ -238,4 +216,8 @@ app.post('/logout', (request, response) => {
 // CATCHALL - for non-existing page requests goes back to index
 app.get('*', (request, response) => {
   response.redirect('/urls');
+});
+
+app.listen(PORT, () => {
+  console.log(`Example app listening on port ${PORT}`);
 });
