@@ -7,7 +7,7 @@ const getUserByEmail = function(email, userObj) {
   }
 };
 
-//generates random 6-character string
+//generates random 6-character string, (courtesy @adeneo https://stackoverflow.com/a/237983104)
 const generateRandomString = function() {
   return Math.random().toString(36).split('').filter(function(value, index, self) {
     return self.indexOf(value) === index;
