@@ -2,7 +2,7 @@
 
 const express = require('express');
 const bodyParser = require('body-parser');
-const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session');
 const app = express();
 const bcrypt = require('bcrypt');
 const PORT = 8080;
@@ -38,7 +38,10 @@ const urlIsForUser = function(id) {
 
 app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({extended: true}));
-app.use(cookieParser());
+app.use(cookieSession({
+  name: 'session',
+  keys: ['key1', `key2`]
+}));
 
 //TESTING ACCOUNTS AND DATA OBJECTS
 
@@ -70,7 +73,7 @@ app.get('/', (request, response) => {
 
 //clears cookies
 app.post('/logout', (request, response) => {
-  response.clearCookie("user_id");
+  request.session = null;
   response.redirect("/urls");
 });
 
@@ -83,7 +86,7 @@ app.post('/urls', (request, response) => {
 
 //Displays all URLs owned by user
 app.get('/urls', (request, response) => {
-  let id = request.cookies["user_id"];
+  let id = request.session["user_id"];
   let templateVars = {
     urls: urlIsForUser(id),
     user: users[id]
@@ -97,23 +100,23 @@ app.get('/urls.json', (request, response) => {
 
 // GOTO new_URLs page, goes to login if user not logged in, only user URLs
 app.get('/urls/new', (request, response) => {
-  let id = request.cookies["user_id"];
-  if (!users[request.cookies["user_id"]]) {
+  let id = request.session["user_id"];
+  if (!users[request.session["user_id"]]) {
     let templateVars = {
-      user: users[request.cookies["user_id"]]
+      user: users[request.session["user_id"]]
     };
     response.render('login', templateVars);
   }
   let templateVars = {
     urls: urlIsForUser(id),
-    user: users[request.cookies["user_id"]]
+    user: users[request.session["user_id"]]
   };
   response.render('urls_new', templateVars);
 });
 
 // GOTO shortURL page if owned by user, error if not owned/logged in
 app.get('/urls/:shortURL', (request, response) => {
-  let id = request.cookies["user_id"];
+  let id = request.session["user_id"];
   let reqUrl = request.params.shortURL;
   if (id !== urlDatabase[reqUrl].userID) {
     response.status(403).send("shortURL not owned by user");
@@ -128,7 +131,7 @@ app.get('/urls/:shortURL', (request, response) => {
 
 // DELETE - deletes short/long URL entry from urlDatabase object, check if logged in/owner
 app.post('/urls/:shortURL/delete', (request, response) => {
-  let id = request.cookies["user_id"];
+  let id = request.session["user_id"];
   let reqUrl = request.params.shortURL;
   if (id !== urlDatabase[reqUrl].userID) {
     response.status(403).send("shortURL not owned by user");
@@ -147,7 +150,7 @@ app.get('/u/:shortURL', (request, response) => {
 
 // EDIT - change longURL and redirect to URL list
 app.post('/urls/:id', (request, response) => {
-  let id = request.cookies["user_id"];
+  let id = request.session["user_id"];
   let reqUrl = request.params.shortURL;
   if (id !== urlDatabase[reqUrl].userID) {
     response.status(403).send("shortURL not owned by user");
@@ -170,17 +173,18 @@ app.post('/login', (request, response) => {
       response.status(403).send("Incorrect password");
     }
     if (uEmail === users[`${userID}`]["email"] && pwMatch) {
-      response.cookie('user_id', userID);
-      return response.redirect('urls/');
+      request.session['user_id'] = userID;
+      console.log(userID, " successfully logged in");
+      console.log(request.session["user_id"]);
+      response.redirect('urls/');
     }
   }
-  response.status(400).send('Email or password incorrect');
 });
 
 // USER LOGIN - goto login page
 app.get('/login',(request, response) => {
   let templateVars = {
-    user: users[request.cookies["user_id"]]
+    user: users[request.session["user_id"]]
   };
   response.render('login', templateVars);
 });
@@ -189,11 +193,9 @@ app.get('/login',(request, response) => {
 app.post('/register', (request, response) => {
   if (!request.body["email"] || !request.body["password"]) {
     response.status(400).send('email or password not entered.');
-    return;
   }
   if (emailExists(request.body["email"], users)) {
     response.status(400).send('Email already exists.');
-    return;
   }
   let newID = generateRandomString();
   let hashPW = bcrypt.hashSync(request.body["password"], 10);
@@ -201,14 +203,14 @@ app.post('/register', (request, response) => {
     email: request.body["email"],
     password: hashPW
   };
-  response.cookie('user_id', newID);
-  return response.redirect('urls/');
+  request.session['user_id'] = newID;
+  response.redirect('urls/');
 });
 
 // USER REGISTRATION - Go to registration page
 app.get('/register', (request, response) => {
   let templateVars = {
-    user: users[request.cookies["user_id"]]
+    user: users[request.session["user_id"]]
   };
   response.render('register', templateVars);
 });
